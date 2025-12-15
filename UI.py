@@ -11,32 +11,29 @@ class App(ctk.CTk):
 
         self.files_list = []
 
-        # A field to drag and drop files
-        drop_field = ctk.CTkFrame(self, width=700, height=300, fg_color="#2E2E2E")
-        drop_field.pack(padx = 10, pady =10)
+        # A field to display files
+        self.files_field = ctk.CTkFrame(self, width=700, height=300, fg_color="#2E2E2E")
+        self.files_field.pack(padx = 10, pady =10)
 
-        # prepare the drage_and_drop image
-        pil_drop_icon = Image.open("Assets\\drag-and-drop.png")
+
+        # prepare the browse image
+        pil_drop_icon = Image.open("Assets\\export.png")
         drop_icon = ctk.CTkImage(light_image=pil_drop_icon,
                                  dark_image=pil_drop_icon,
-                                 size=(100,100))
+                                 size=(150,150))
         # display the image
-        drop_icon_lable = ctk.CTkLabel(drop_field, width=100, height=100, text="", image=drop_icon)
-        drop_icon_lable.place(relx=0.5, rely=0.5, y= -30, anchor="center")
-
-        # A text under the icon to declear what's going on
-        drop_text = ctk.CTkLabel(drop_field, text="Drag and Drop, or", font=ctk.CTkFont(family="Arial", size=15, weight="bold"))
-        drop_text.place(relx=0.5, rely=0.5, y=50, anchor="center")
+        drop_icon_lable = ctk.CTkLabel(self.files_field, width=150, height=150, text="", image=drop_icon)
+        drop_icon_lable.place(relx=0.5, rely=0.5, y=-30, anchor="center")
 
         # A button to browse and get files
-        browse_button = ctk.CTkButton(drop_field, 
+        browse_button = ctk.CTkButton(self.files_field, 
                                       width=50, 
                                       height=30, 
                                       text="Browse", 
                                       fg_color="#2C2AB4", 
                                       hover_color="#1e1cb1",
                                       command=self.Browse)
-        browse_button.place(relx=0.5, rely=0.5, y=80, anchor="center")
+        browse_button.place(relx=0.5, rely=0.5, y=70, anchor="center")
 
         # Buttons to Merge, Split, and Compress & Make it disabled initially 
 
@@ -75,7 +72,12 @@ class App(ctk.CTk):
 
         if files:
             if len(self.files_list) == 0:
+                # destroy the current frame and make it scrollable frame
                 self.enable_buttons()
+                self.files_field.destroy()
+                self.files_field = ctk.CTkScrollableFrame(self, width=700, height=290, fg_color="#2E2E2E")
+                self.files_field.pack(padx = 10, pady =10)
+            # add the selected files to the files list
             self.files_list.extend(files)
 
     def enable_buttons(self):
