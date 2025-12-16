@@ -118,6 +118,11 @@ class App(ctk.CTk):
             file_name_label = ctk.CTkLabel(file_label, text=file_name, font=ctk.CTkFont(family="Arial", size=15, weight="bold"))
             file_name_label.place(rely=0.5, relx=0, x=10, anchor="w")
 
+            # display file's path
+            max_path_len = 30
+            path = file if len(file) <= max_path_len else file[:max_path_len+1]
+            path_label = ctk.CTkLabel(file_label, text=path, font=("Arial", 13))
+
     def merging(self):
         self.merge_window = ctk.CTkToplevel(self)
         self.merge_window.geometry("960x540")
