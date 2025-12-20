@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
 import os
+from core import merge_files
 
 class App(ctk.CTk):
     def __init__(self):
@@ -46,7 +47,7 @@ class App(ctk.CTk):
                                      state="disabled",
                                      fg_color="#18185F",
                                      text_color="#A1A1A1",
-                                     command=self.merging)
+                                     command=self.on_merge_click)
         self.merge_button.place(y=400, x=180, anchor="center")
 
         # Split
@@ -120,14 +121,42 @@ class App(ctk.CTk):
 
             # display file's path
             max_path_len = 30
-            path = file if len(file) <= max_path_len else file[:max_path_len+1]
-            path_label = ctk.CTkLabel(file_label, text=path, font=("Arial", 13))
+            path = file if len(file) <= max_path_len else f"{file[:max_path_len+1]}..."
+            path_label = ctk.CTkLabel(file_label, text=path, font=("Arial", 10))
+            path_label.place(rely=0.5, relx=0.5, anchor="w")
 
-    def merging(self):
-        self.merge_window = ctk.CTkToplevel(self)
-        self.merge_window.geometry("960x540")
-        self.title("Merge")
-        self.merge_window.resizable(False, False)
-        self.merge_window.grab_set()
-        self.merge_window.focus()
+            # button to remove
+            pil_remove_icon = Image.open(r"Assets\delete.png")
+            remove_icon = ctk.CTkImage(light_image=pil_remove_icon,
+                                       dark_image=pil_remove_icon,
+                                       size=(25, 25))
+            remove_button = ctk.CTkButton(file_label, 
+                                          width=30, 
+                                          height=30, 
+                                          text="", 
+                                          image=remove_icon, 
+                                          fg_color="transparent",
+                                          )
+            remove_button.place(rely=0.5, x=600, anchor="center")
+
+    def delete_file(self):
+        pass
+
+    def on_merge_click(self):
+        file_direcotry = self.select_directory("Save Merged Files")
+        if file_direcotry:
+            merge_files(self.files_list, file_direcotry)
+
+
+
+    def select_directory(self, window_title):
+        file_direcotry = filedialog.asksaveasfilename(title=window_title,
+                                                      initialfile= "Untitled.pdf",
+                                                      defaultextension=".pdf", 
+                                                      filetypes=[("PDF files", "*.pdf")])
+        if file_direcotry:
+            return file_direcotry
+
+
+
         
