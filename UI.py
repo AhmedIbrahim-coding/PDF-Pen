@@ -11,7 +11,8 @@ class App(ctk.CTk):
         self.title("PDF Pen")
         self.resizable(False, False)
 
-        self.files_list = []
+        # A dictionary to hold the files paths with keys
+        self.files_dictionary = {}
 
         # A field to display files
         self.files_field = ctk.CTkFrame(self, width=700, height=300, fg_color="#2E2E2E")
@@ -74,7 +75,7 @@ class App(ctk.CTk):
         files = filedialog.askopenfilenames(title="Select PDF files", filetypes=[("PDF files", "*.pdf")])
 
         if files:
-            if len(self.files_list) == 0:
+            if len(self.files_dictionary) == 0:
                 # destroy the current frame and make it scrollable frame
                 self.enable_buttons()
                 self.files_field.destroy()
@@ -98,17 +99,25 @@ class App(ctk.CTk):
                 self.adding_button.pack(pady=3, padx=5, anchor="w")
                 
 
-            # add the selected files to the files list
-            self.files_list.extend(files)
-            self.show_added_files(files)
+            # add the selected files to the files dictionary
+            start_key = len(self.files_dictionary) + 1 # to store the lenght before adding items
+            key = start_key 
+            for file in files:
+                self.files_dictionary[key] = file
+                key += 1
+            self.show_added_files(files, start_key)
 
     def enable_buttons(self):
         for btn in (self.split_button, self.merge_button, self.compress_button):
             btn.configure(state="normal", fg_color="#2C2AB4", hover_color="#1e1cb1", text_color="white")
 
-    def show_added_files(self, files_list):
+    def show_added_files(self, files_list, start_key):
+        # A dictionary to hold the displayed files with keys
+        self.displayed_files = {}
+
         # add all the selected files to the files field
         for file in files_list:
+            print(start_key)
             file_label = ctk.CTkFrame(self.files_field, width=400, height=50, fg_color="#254661")
             file_label.pack(pady=3, padx=5, anchor="w", fill="x", before=self.adding_button) # add the labels before the add button
 
@@ -136,16 +145,20 @@ class App(ctk.CTk):
                                           text="", 
                                           image=remove_icon, 
                                           fg_color="transparent",
+                                          command= lambda k=start_key: self.delete_file(k)
                                           )
             remove_button.place(rely=0.5, x=600, anchor="center")
+            self.displayed_files[start_key] = file_label
+            start_key += 1
 
-    def delete_file(self):
-        pass
+    def delete_file(self, file_key):
+        del self.files_dictionary[file_key]
+        self.displayed_files[file_key].destroy()
 
     def on_merge_click(self):
         file_direcotry = self.select_directory("Save Merged Files")
         if file_direcotry:
-            merge_files(self.files_list, file_direcotry)
+            merge_files(self.files_dictionary, file_direcotry)
 
 
 
