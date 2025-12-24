@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
 import os
-from core import merge_files
+from core import merge_files, split_files, EntryError
 
 class App(ctk.CTk):
     def __init__(self):
@@ -13,6 +13,7 @@ class App(ctk.CTk):
 
         # A dictionary to hold the files paths with keys
         self.files_dictionary = {}
+        self.displayed_files = {}
 
         # A field to display files
         self.files_field = ctk.CTkFrame(self, width=700, height=300, fg_color="#2E2E2E")
@@ -58,7 +59,8 @@ class App(ctk.CTk):
                                      font=ctk.CTkFont(family="Arial", size=20, weight="bold"),
                                      state="disabled",
                                      fg_color="#18185F",
-                                     text_color="#A1A1A1")
+                                     text_color="#A1A1A1",
+                                     command=self.on_split_click)
         self.split_button.place(y=400, x=360, anchor="center")
 
         # Compress
@@ -112,58 +114,58 @@ class App(ctk.CTk):
             btn.configure(state="normal", fg_color="#2C2AB4", hover_color="#1e1cb1", text_color="white")
 
     def show_added_files(self, files_list, start_key):
-        # A dictionary to hold the displayed files with keys
-        self.displayed_files = {}
-
         # add all the selected files to the files field
         for file in files_list:
-            print(start_key)
-            file_label = ctk.CTkFrame(self.files_field, width=400, height=50, fg_color="#254661")
+            file_label = FileFrame(self.files_field, file_path=file, file_key=start_key)
             file_label.pack(pady=3, padx=5, anchor="w", fill="x", before=self.adding_button) # add the labels before the add button
 
-            # display file's name
-            file_fullname = os.path.basename(file)
-            max_name_len = 15
-            file_name = f"{file_fullname[:max_name_len+1]}..." if len(file_fullname) > max_name_len else file_fullname
-            file_name_label = ctk.CTkLabel(file_label, text=file_name, font=ctk.CTkFont(family="Arial", size=15, weight="bold"))
-            file_name_label.place(rely=0.5, relx=0, x=10, anchor="w")
 
-            # display file's path
-            max_path_len = 30
-            path = file if len(file) <= max_path_len else f"{file[:max_path_len+1]}..."
-            path_label = ctk.CTkLabel(file_label, text=path, font=("Arial", 10))
-            path_label.place(rely=0.5, relx=0.5, anchor="w")
 
-            # button to remove
-            pil_remove_icon = Image.open(r"Assets\delete.png")
-            remove_icon = ctk.CTkImage(light_image=pil_remove_icon,
-                                       dark_image=pil_remove_icon,
-                                       size=(25, 25))
-            remove_button = ctk.CTkButton(file_label, 
-                                          width=30, 
-                                          height=30, 
-                                          text="", 
-                                          image=remove_icon, 
-                                          fg_color="transparent",
-                                          command= lambda k=start_key: self.delete_file(k)
-                                          )
-            remove_button.place(rely=0.5, x=600, anchor="center")
-            self.displayed_files[start_key] = file_label
-            start_key += 1
-
-    def delete_file(self, file_key):
-        del self.files_dictionary[file_key]
-        self.displayed_files[file_key].destroy()
 
     def on_merge_click(self):
         file_direcotry = self.select_directory("Save Merged Files")
         if file_direcotry:
             merge_files(self.files_dictionary, file_direcotry)
 
+    def on_split_click(self):
+        # A child window to get the pages for every split
+        window = ctk.CTkToplevel(self)
+        window.focus()
+        window.grab_set()
+        window.geometry("320x120")
+        window.title("Split Options")
+        window.resizable(False, False)
+        
+        pages_entry = ctk.CTkEntry(window, width=50, height=30, placeholder_text="", font=("Arial", 12), border_color="gray")
+        pages_entry.place(relx=0.5, rely=0, y=50, anchor="center")
+
+        text_label1 = ctk.CTkLabel(window, text="Split at ", font=("Arial", 12))
+        text_label1.place(x=110, y=50, rely=0, relx=0, anchor="center")
+        text_label2 = ctk.CTkLabel(window, text="pages.", font=("Arial", 12))
+        text_label2.place(x=210, y=50, rely=0, relx=0, anchor ="center")
+
+        # a func to start splitting when hit the split button
+        def start_split():
+            try:
+                range = int(pages_entry.get())
+                print(range)
+
+                if range == 0 or type(range) != int:
+                    raise EntryError()
+                
+                output_dir = filedialog.askdirectory(title="Save files in...")
+                if output_dir:
+                    window.destroy()
+                    split_files(self.files_dictionary, output_dir, range)
+            except:
+                pages_entry.configure(border_color="red")
+
+        split_button = ctk.CTkButton(window, width=80, height=30, text="Split", font=("Arial", 12), command=start_split)
+        split_button.place(relx=1, rely=1, y=-30, x=-50, anchor="center")
 
 
-    def select_directory(self, window_title):
-        file_direcotry = filedialog.asksaveasfilename(title=window_title,
+    def select_directory(self):
+        file_direcotry = filedialog.asksaveasfilename(title="Output_path",
                                                       initialfile= "Untitled.pdf",
                                                       defaultextension=".pdf", 
                                                       filetypes=[("PDF files", "*.pdf")])
@@ -171,5 +173,26 @@ class App(ctk.CTk):
             return file_direcotry
 
 
+class FileFrame(ctk.CTkFrame):
+    def __init__(self, master, file_path, file_key):
+        super().__init__(master=master, width=690, height=50, fg_color="#254661")
+        # master is the scrollable frame; its master is the App instance
+        self.app = getattr(master, "master", None)
+        self.file_path = file_path
+        self.file_name = os.path.basename(file_path)
+        self.file_key = file_key
 
-        
+        self.display_file_name()
+        self.display_file_path()
+
+    def display_file_name(self):
+        name = self.file_name if len(self.file_name) <= 15 else f"{self.file_name[:16]}..."
+        file_name_label = ctk.CTkLabel(self, text=name, font=ctk.CTkFont(family="Arial", size=15, weight="bold"))
+        file_name_label.place(rely=0.5, relx=0, x=10, anchor="w")
+
+    def display_file_path(self):
+        path = self.file_path if len(self.file_path) <= 30 else f"{self.file_path[:31]}..."
+        path_label = ctk.CTkLabel(self, text=path, font=("Arial", 10))
+        path_label.place(rely=0.5, relx=0.5, x=-30, anchor="w")
+
+
