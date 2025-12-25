@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
 import os
-from core import merge_files, split_files, EntryError
+from core import merge_files, split_files, compress_files, EntryError
 
 class App(ctk.CTk):
     def __init__(self):
@@ -70,7 +70,8 @@ class App(ctk.CTk):
                                      font=ctk.CTkFont(family="Arial", size=20, weight="bold"),
                                      state="disabled",
                                      fg_color="#18185F",
-                                     text_color="#A1A1A1")
+                                     text_color="#A1A1A1",
+                                     command=self.on_compress_click)
         self.compress_button.place(y=400, x=540, anchor="center")
 
     def Browse(self):
@@ -121,7 +122,6 @@ class App(ctk.CTk):
 
 
 
-
     def on_merge_click(self):
         file_direcotry = self.select_directory("Save Merged Files")
         if file_direcotry:
@@ -148,7 +148,6 @@ class App(ctk.CTk):
         def start_split():
             try:
                 range = int(pages_entry.get())
-                print(range)
 
                 if range == 0 or type(range) != int:
                     raise EntryError()
@@ -163,10 +162,16 @@ class App(ctk.CTk):
         split_button = ctk.CTkButton(window, width=80, height=30, text="Split", font=("Arial", 12), command=start_split)
         split_button.place(relx=1, rely=1, y=-30, x=-50, anchor="center")
 
+    def on_compress_click(self):
+        output_dir = filedialog.askdirectory(title="Output where")
+        if output_dir:
+            print(output_dir)
+            compress_files(self.files_dictionary, output_dir)
 
-    def select_directory(self):
-        file_direcotry = filedialog.asksaveasfilename(title="Output_path",
-                                                      initialfile= "Untitled.pdf",
+
+    def select_directory(self, window_title):
+        file_direcotry = filedialog.asksaveasfilename(title=window_title,
+                                                      initialfile= "Untitled",
                                                       defaultextension=".pdf", 
                                                       filetypes=[("PDF files", "*.pdf")])
         if file_direcotry:

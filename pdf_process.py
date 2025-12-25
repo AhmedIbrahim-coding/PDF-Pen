@@ -6,6 +6,7 @@ import io
 class PDF_Editor:
     def __init__(self, files):
         self.files = files
+        self.edited_files = 0
 
     def merge_files(self, output_path: str, temp: bool = False):
         
@@ -31,7 +32,7 @@ class PDF_Editor:
         # first we have to merge all files into one temporary file
         reader = PdfReader(self.merge_files(output_path, temp=True))
 
-        
+        # then slice the merged files into small files
         total_pages = len(reader.pages)
         for start in range(0, total_pages, split_range):
             writer = PdfWriter()
@@ -44,5 +45,20 @@ class PDF_Editor:
                 writer.write(f)
 
 
-    def compress(self):
-        pass
+    def compress(self, output_path: str):
+        self.edited_files = 0
+        for file in self.files: 
+            reader = PdfReader(file)
+            writer = PdfWriter()
+
+            for page in reader.pages:
+                page.compress_content_streams()
+                writer.add_page(page)
+
+            file_name = os.path.basename(file)
+            final_path = os.path.join(output_path, file_name)
+            with open(final_path, "wb") as compressor:
+                writer.write(compressor)
+
+            self.edited_files += 1
+            print(self.edited_files)
